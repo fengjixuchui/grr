@@ -1,7 +1,10 @@
 include ../tools/Makefile.efi
 
-APP := hdd/efi/grr/grr.efi
-OBJ := src/uart.o src/grr.o src/linux.o
+APP := hdd/efi/boot/bootx64.efi
+OBJ :=	src/efi/grr_efi.o \
+	src/hv/uart.o \
+	src/hv/hv.o \
+	src/hv/init.o
 
 all: $(APP)
 

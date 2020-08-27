@@ -4,10 +4,10 @@
 #ifndef BOOTPARAM_H
 #define BOOTPARAM_H
 
-typedef efi_u8 __u8;
-typedef efi_u16 __u16;
-typedef efi_u32 __u32;
-typedef efi_u64 __u64;
+typedef uint8_t __u8;
+typedef uint16_t __u16;
+typedef uint32_t __u32;
+typedef uint64_t __u64;
 
 #define SETUP_NONE			0
 #define SETUP_E820_EXT			1
