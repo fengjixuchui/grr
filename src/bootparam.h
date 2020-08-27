@@ -1,3 +1,6 @@
+/*
+ * Linux boot parameters, with all copyrightable info stripped
+ */
 #ifndef BOOTPARAM_H
 #define BOOTPARAM_H
 
