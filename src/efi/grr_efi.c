@@ -147,6 +147,7 @@ fill_mmap(grr_handover *handover, efi_size *map_key)
 	/* E820 memory map */
 	efi_size	e820_entries;
 	grr_e820_entry	*e820_cur;
+	efi_u32		e820_last_type;
 
 	status = EFI_SUCCESS;
 
@@ -179,20 +180,22 @@ retry:
 		free(mmap);
 		return EFI_UNSUPPORTED;
 	}
-
 	handover->mmap_entries = e820_entries;
 
 	/* Convert UEFI memory map to E820 */
+	e820_last_type = 0;
 	for (mmap_ent = mmap; (void *) mmap_ent < mmap + mmap_size;
 				mmap_ent = (void *) mmap_ent + desc_size) {
+		/* Make sure we won't be trashed */
+		if (mmap_ent->start == (efi_u64) self_loaded_image->image_base)
+			mmap_ent->type = efi_runtime_services_code;
+
+		/* Calculate the E820 start and size */
 		e820_cur->addr = mmap_ent->start;
 		#define PAGE_SIZE 4096 /* TODO: make sure this is always true */
 		e820_cur->size = mmap_ent->number_of_pages * PAGE_SIZE;
 
-		/* Make sure we won't be trashed */
-		if (e820_cur->addr == (efi_u64) self_loaded_image->image_base)
-			mmap_ent->type = efi_runtime_services_code;
-
+		/* Map to an E820 type */
 		switch (mmap_ent->type) {
 		case efi_conventional_memory:
 		case efi_loader_code:
@@ -215,7 +218,18 @@ retry:
 			e820_cur->type = GRR_E820_RESERVED;
 			break;
 		}
-		++e820_cur;
+
+		if (e820_cur->type == e820_last_type &&
+				e820_cur->addr == e820_cur[-1].addr
+				+ e820_cur[-1].size) {
+			/* Do some compaction */
+			e820_cur[-1].size += e820_cur->size;
+			--handover->mmap_entries;
+		} else {
+			/* Move to the next entry */
+			e820_last_type = e820_cur->type;
+			++e820_cur;
+		}
 	}
 
 	/* NOTE: the UEFI mmap cannot be freed otherwise UEFI shits itself */
