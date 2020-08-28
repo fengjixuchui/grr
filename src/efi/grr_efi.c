@@ -240,6 +240,12 @@ retry:
 #define INITRD_PATH	L"\\efi\\grr\\initrd.img-4.19.0-10-amd64"
 #define CMDLINE		"root=/dev/sda2 rw"
 
+/*
+ * We need to put this in .data otherwise there is a chance it will get trashed,
+ * when the hv stage moves the kernel around
+ */
+static grr_handover glo_handover;
+
 void
 efiapi
 efi_main(efi_handle image_handle, efi_system_table *system_table)
@@ -252,7 +258,7 @@ efi_main(efi_handle image_handle, efi_system_table *system_table)
 	init_util(image_handle, system_table);
 
 	print(L"GRR efi stage entry\n");
-	handover = malloc(sizeof(grr_handover));
+	handover = &glo_handover;
 
 	/* Load kernel and initrd */
 	status = load_file(LINUX_PATH, &handover->linux_size, &handover->linux);
