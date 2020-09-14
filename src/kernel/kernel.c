@@ -12,12 +12,6 @@
 #include <vmm/vmm.h>
 
 /*
- * Global kernel lock
- * NOTE: the BSP owns the lock from the start
- */
-int kernel_global_lock = 1;
-
-/*
  * Paging setup code
  */
 
@@ -31,7 +25,7 @@ pginit(void)
 	size_t pml4_idx, pdp_idx;
 
 	/* Must be <4G, it's loaded in 32-bit mode during SMP init */
-	kernel_pml4 = alloc_pages(1, 0xffffffff);
+	kernel_pml4 = alloc_pages(1, (void *) 0xffffffff);
 	cur_phys = 0;
 
 	for (pml4_idx = 0; pml4_idx < 256; ++pml4_idx) {
@@ -113,5 +107,5 @@ kernel_main(struct grr_handover *handover)
 
 	/* Start Linux in the VMM */
 	uart_print("Calling BSP VMM startup!\n");
-	vmm_startup_bsp(vmm_setup_core(), handover);
+	vmm_execute(vmm_setup_bsp(handover));
 }
